@@ -1,0 +1,72 @@
+# Explore NavHealth's Demo Encounter Data in RStudio
+
+# This RData file successfully retrieves relevant encounter data from
+# NavHealth's demo api to show the distribution of class (e.g. inpatient),
+# encounters by participant (aka provider) and encounters by participant & role
+# (e.g. referrer).
+
+# The followinng packages are used in this exploratory data analysis
+library(jsonlite)
+library(httr)
+library(ggplot2)
+
+# Get data on patient encounters from NavHealth Demo
+encountersJSON <- fromJSON("https://navhealth.herokuapp.com/api/fhir/Encounter")
+
+# Grab data to explore the kinds of encounters in the data set
+encounterResource <- encountersJSON$entry$resource
+
+# Plot distribution by class (e.g. inpatient v. ambulatory)
+encounterDist <- ggplot(encounterResource, aes(class))
+encounterDist + geom_bar()
+
+# Grab data to explore the distribution of encounters based on provider
+encounterEntry <- encountersJSON$entry
+
+# How many encounters are in the data set?
+numEncounters = length(encounterEntry[[1]]$id)
+
+# Declaring empty vectors just to be safe
+# Later these will be added to the encounterPart data.frame
+encounter.id <- vector() # unique hash for provider
+participant.role <- vector() # enum includes attender, referer, etc.
+participant.URI <- vector() # can be used to lookup additional data about the provider
+participant.name <- vector() # provider's name
+
+# Transform listed values within the original JSON into separate lists
+# Later we'll recombine these as a new encounterPart data frame
+for(i in 1:numEncounters){
+  # Check to see how many participants per encounter. Hint: It can be 1 to many
+  encounter.numParts <- length(encounterEntry[[1]]$participant[[i]]$individual$reference)
+
+  # Cycle through each participant aka provider and associate the encounter id, participant role, etc.
+  for(g in 1:encounter.numParts){
+    encounter.id <- I(c(encounter.id, encounterEntry[[1]]$id[[i]]))
+    participant.role <- c(participant.role, encounterEntry[[1]]$participant[[i]]$type$coding[[g]]$display)
+    participant.URI <- (c(participant.URI, encounterEntry[[1]]$participant[[i]]$individual$reference[[g]]))
+    participant.name <- (c(participant.name, encounterEntry[[1]]$participant[[i]]$individual$display[[g]]))
+  }
+}
+
+# Note: the use of I() above inhibits interpretation which forces storage of up to N unique values
+# I don't know if that's really necessary, but I added it just to be safe
+
+# Build a data frame of provider info for each patient encounter
+encounterPart <- data.frame(
+  encounter.id
+  , participant.role
+  , participant.URI
+  , participant.name
+)
+
+# Plot distribution of encounters by participant aka provider
+encounterProvDist <- ggplot(encounterPart, aes(participant.name))
+encounterProvDist + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plot distribution of encounters by participant role
+encounterRoleDist <- ggplot(encounterPart, aes(x = participant.role))
+encounterRoleDist + geom_bar()
+
+# Plot distribution of encounters by participant aka provider & role
+encounterProvRoleDist <- ggplot(encounterPart, aes(x = participant.name, color = participant.role, fill = participant.role))
+encounterProvRoleDist + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
