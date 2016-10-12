@@ -1,16 +1,14 @@
-# navhealth-demo-rstudio
-
-## Explore NavHealth's Demo Data using RStudio
+# Explore NavHealth's Demo Data using RStudio
 This repo includes exploratory data analysis examples using RStudio and popular packages like JSONLite, Httr and GGPlot2. 
 
 Hopefully it helps you learn more about a cool company and HL7's emerging Fast Healthcare Interoperability Resources (FHIR) standard.
 
 Code reviews and commits welcome. 
 
-## NavHealth's Documentation
+# NavHealth's Documentation
 NavHealth's public developer documentation introduces the company's health API and FHIR data structures via a tutorial on how to build a simple pediatric application. For more, see https://dev.navhealth.com/documentation.
 
-## About NavHealth
+# About NavHealth
 _Source:_ https://angel.co/navhealth _copied 2016-10-12_
 
 > We're empowering health systems and patients to make better use of personal health data. 
