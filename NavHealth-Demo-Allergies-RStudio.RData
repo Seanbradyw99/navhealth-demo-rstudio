@@ -1,0 +1,47 @@
+# Explore NavHealth's Demo Encounter Data in RStudio
+
+# This RData file retrieves relevant patient AllergyIntolerance data from
+# NavHealth's demo api to show the distribution patient allergies.
+# The visualization is modeled after Fig. 2.19 in the "R Graph Catalog".
+# See http://shinyapps.stat.ubc.ca/r-graph-catalog/#fig02-19_population-of-cities-dot-plot
+
+# The followinng packages are used in this exploratory data analysis
+library(jsonlite)
+library(httr)
+library(ggplot2)
+
+# Get data on patients from NavHealth Demo
+patientAllergyJSON <- fromJSON("https://navhealth.herokuapp.com/api/fhir/patient?resourceType=AllergyIntolerance")
+
+# Grab data to explore the kinds of encounters in the data set
+patientAllergyDF <- patientAllergyJSON$entry$resource
+
+# Calculate the frequency (i.e. occurrences) for each allergy reported in the data set
+# Ordered by allergen with highest frequency to lowest
+allergenFreq <- as.data.frame(sort(table(patientAllergyDF$substance$text),decreasing = TRUE))
+
+
+# Plot distribution by allergen (e.g. peanut, latex, etc.)
+# Set scale limit based on largest value
+plotLimit <- round(allergenFreq$Freq[[1]] * 1.25, digits = -1)
+plotSeq <- round((plotLimit / 5), digits = -1)
+
+allergenDist <- ggplot(allergenFreq, aes(x = Freq, y = reorder(Var1, Freq))) +
+  geom_point(size = 3) +
+
+# Need to investigate why this line throws an error!!!
+#  scale_x_continuous(breaks = seq(plotSeq, plotLimt, plotSeq), limits = c(0, plotLimt),
+#                     expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0.5)) +
+  labs(x = "Occurrences in Patient Population", y = NULL) +
+  ggtitle("Fig 1.1 Patient Allergies") +
+  theme_bw() +
+  theme(panel.grid.major.y = element_line(colour = "grey50"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(size = rel(1.5), face = "bold", vjust = 1.5),
+        axis.title.x = element_text(size = 13),
+        axis.ticks.y = element_blank())
+
+# Display viz
+allergenDist
